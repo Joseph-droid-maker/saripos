@@ -1,0 +1,59 @@
+// Base path for ALL API calls.
+// In development, Vite proxies /saripos → http://localhost (XAMPP).
+// In production, /saripos/backend/api is served directly by Apache.
+const BASE = '/saripos/backend/api';
+
+async function request(path, opts = {}) {
+  const isFormData = opts.body instanceof FormData;
+
+  const res = await fetch(BASE + path, {
+    credentials: 'include',                           // Required for PHP session cookies
+    headers: isFormData ? {} : { 'Content-Type': 'application/json' },
+    ...opts,
+  });
+
+  // Parse JSON response (PHP always returns JSON)
+  let data;
+  try { data = await res.json(); }
+  catch { throw new Error('Invalid server response'); }
+
+  // Throw so callers can catch in try/catch
+  if (!res.ok) throw new Error(data?.message || `HTTP ${res.status}`);
+
+  return data;
+}
+
+export const api = {
+  get:    (path)       => request(path, { method: 'GET' }),
+  post:   (path, body) => request(path, {
+    method: 'POST',
+    body: body instanceof FormData ? body : JSON.stringify(body),
+  }),
+  put:    (path, body) => request(path, { method: 'PUT',    body: JSON.stringify(body) }),
+  delete: (path)       => request(path, { method: 'DELETE' }),
+};
+
+// Helper: build image URL from relative path stored in DB
+export function imgUrl(path) {
+  if (!path) return null;
+  return `/saripos/backend/${path}`;
+}
+
+// Helper: Philippine peso format
+export function peso(amount) {
+  return '₱' + parseFloat(amount || 0).toLocaleString('en-PH', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+// Helper: today's date as YYYY-MM-DD
+export function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// Helper: first day of this month as YYYY-MM-DD
+export function firstOfMonth() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+}

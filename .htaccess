@@ -1,0 +1,24 @@
+Options -MultiViews
+
+# Enable Apache's URL rewriting engine
+RewriteEngine On
+
+# -------------------------------------------------------
+# IMPORTANT: Set RewriteBase to match where your app lives
+#
+# If your app is at:  http://localhost/          → use /
+# If your app is at:  http://localhost/saripos/  → use /saripos/
+# -------------------------------------------------------
+RewriteBase /saripos/
+
+# If the request maps to a real existing FILE (JS, CSS, images, etc.)
+# → serve it directly, do NOT rewrite
+RewriteCond %{REQUEST_FILENAME} !-f
+
+# If the request maps to a real existing DIRECTORY
+# → serve it directly, do NOT rewrite
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Anything else (all your React routes) → send to index.html
+# React Router will then read the URL and render the correct page
+RewriteRule ^ index.html [L]
