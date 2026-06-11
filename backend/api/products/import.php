@@ -89,11 +89,28 @@ while (($row = fgetcsv($handle)) !== false) {
         );
         $stmt->bind_param('sssddii', $name, $desc, $sku, $price, $costPrice, $stock, $catId);
     } else {
-        $stmt = $db->prepare(
-            'INSERT INTO products (name, description, price, cost_price, stock, category_id)
-             VALUES (?, ?, ?, ?, ?, ?)'
+            // No SKU — try to find an existing product by name to avoid duplicates
+        $find = $db->prepare(
+            'SELECT id FROM products WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) AND is_active = 1 LIMIT 1'
         );
-        $stmt->bind_param('ssddii', $name, $desc, $price, $costPrice, $stock, $catId);
+        $find->bind_param('s', $name);
+        $find->execute();
+        $existing = $find->get_result()->fetch_assoc();
+        $find->close();
+
+        if ($existing) {
+            // Update the existing product instead of inserting a duplicate
+            $stmt = $db->prepare(
+                'UPDATE products SET description=?, price=?, cost_price=?, stock=stock+?, category_id=? WHERE id=?'
+            );
+            $stmt->bind_param('sddiii', $desc, $price, $costPrice, $stock, $catId, $existing['id']);
+        } else {
+            $stmt = $db->prepare(
+                'INSERT INTO products (name, description, price, cost_price, stock, category_id) VALUES (?, ?, ?, ?, ?, ?)'
+            );
+            $stmt->bind_param('ssddii', $name, $desc, $price, $costPrice, $stock, $catId);
+    }
+
     }
 
     if ($stmt->execute()) {

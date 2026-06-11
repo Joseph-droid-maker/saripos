@@ -33,6 +33,9 @@ if (!$user['is_active']) {
     respondError('This account has been deactivated.', 403);
 }
 
+session_regenerate_id(true); 
+
+
 // Store session
 $_SESSION['user_id']   = $user['id'];
 $_SESSION['username']  = $user['username'];
