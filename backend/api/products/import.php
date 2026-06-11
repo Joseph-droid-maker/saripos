@@ -4,6 +4,7 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../middleware/auth.php';
 
 requireAdmin();
+verifyCsrf(); 
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') respondError('Method not allowed.', 405);
 if (empty($_FILES['csv'])) respondError('No file uploaded.');

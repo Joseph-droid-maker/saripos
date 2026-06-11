@@ -36,10 +36,10 @@ export default function App() {
         }}
       />
 
-      <BrowserRouter basename="/saripos">
+      <BrowserRouter>
         <Routes>
           {/* Public */}
-npm           <Route path="/login" element={<LoginPage />} />
+          <Route path="/login" element={<LoginPage />} />
 
           {/* Protected shell */}
           <Route
@@ -50,7 +50,7 @@ npm           <Route path="/login" element={<LoginPage />} />
 
             {/* All authenticated users */}
             <Route path="pos"   element={<POSPage />} />
-            <Route path="sales" element={<Guard><SalesPage /></Guard>} />
+            <Route path="sales" element={<Guard adminOnly><SalesPage /></Guard>} />
 
             {/* Admin only */}
             <Route path="products" element={<Guard adminOnly><ProductsPage /></Guard>} />

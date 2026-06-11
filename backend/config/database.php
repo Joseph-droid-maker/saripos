@@ -1,12 +1,10 @@
 <?php
-// ── Database Configuration ─────────────────────────────────────
-// Edit these values to match your hosting environment.
-// XAMPP defaults: host=localhost, user=root, pass=(empty)
+$_env = require __DIR__ . '/env.php'; 
 
-define('DB_HOST', 'localhost');
-define('DB_USER', 'Joseph');
-define('DB_PASS', 'Morada');
-define('DB_NAME', 'sari_pos');
+define('DB_HOST', $_env['DB_HOST']);
+define('DB_USER', $_env['DB_USER']);
+define('DB_PASS', $_env['DB_PASS']);
+define('DB_NAME', $_env['DB_NAME']);
 
 function getDB(): mysqli {
     $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);

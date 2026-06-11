@@ -133,12 +133,25 @@ function ReceiptModal({ transaction, onClose }) {
 
 // ── Main POS Page ────────────────────────────────────────────
 export default function POSPage() {
+
   const [products,   setProducts]   = useState([]);
   const [categories, setCategories] = useState([]);
-  const [cart,       setCart]       = useState([]);
+  
+  const [cart, setCart] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('pos_cart');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [cash, setCash] = useState(() => {
+    return sessionStorage.getItem('pos_cash') || '';
+  });
+
   const [search,     setSearch]     = useState('');
   const [activeCat,  setActiveCat]  = useState('all');
-  const [cash,       setCash]       = useState('');
   const [loading,    setLoading]    = useState(true);
   const [processing, setProcessing] = useState(false);
   const [receipt,    setReceipt]    = useState(null);
@@ -156,6 +169,8 @@ export default function POSPage() {
     const matchC = activeCat === 'all' || String(p.category_id) === activeCat;
     return matchQ && matchC;
   });
+
+
 
   // ── Data loading ───────────────────────────────────────────
   const loadData = useCallback(async () => {
@@ -175,6 +190,24 @@ export default function POSPage() {
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  useEffect(() => {
+    if (cart.length > 0) {
+      sessionStorage.setItem('pos_cart', JSON.stringify(cart));
+    } else {
+      sessionStorage.removeItem('pos_cart');
+    }
+  }, [cart]);
+
+  useEffect(() => {
+    if (cash) {
+      sessionStorage.setItem('pos_cash', cash);
+    } else {
+      sessionStorage.removeItem('pos_cash');
+    }
+  }, [cash]);
+
+
 
   // ── Cart actions ───────────────────────────────────────────
   const addToCart = (product) => {

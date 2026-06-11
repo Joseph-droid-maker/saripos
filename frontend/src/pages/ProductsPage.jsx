@@ -144,7 +144,9 @@ function ImportModal({ onClose }) {
       }
 
       const fd = new FormData();
+      fd.append('csrf_token', csrfToken);
       fd.append('csv', uploadFile);
+
       const res = await api.post('/products/import.php', fd);
       setResult(res.data);
       toast.success(`Import done: ${res.data.inserted} added, ${res.data.updated} updated`);
@@ -443,6 +445,7 @@ export default function ProductsPage() {
       // Upload image if chosen
       if (imageFile && saved) {
         const fd = new FormData();
+        fd.append('csrf_token', csrfToken); 
         fd.append('image', imageFile);
         fd.append('product_id', saved.id);
         await api.post('/products/upload.php', fd);

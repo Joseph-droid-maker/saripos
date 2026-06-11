@@ -49,7 +49,12 @@ export function peso(amount) {
 
 // Helper: today's date as YYYY-MM-DD
 export function today() {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  // Build from local date components, not UTC
+  const yyyy = d.getFullYear();
+  const mm   = String(d.getMonth() + 1).padStart(2, '0');
+  const dd   = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 // Helper: first day of this month as YYYY-MM-DD

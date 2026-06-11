@@ -10,6 +10,8 @@ $allowed_origins = [
 
 ];
 
+date_default_timezone_set('Asia/Philippines');
+
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
 if (in_array($origin, $allowed_origins, true)) {
@@ -34,11 +36,18 @@ if (session_status() === PHP_SESSION_NONE) {
     session_set_cookie_params([
         'lifetime' => 86400,  // 24 hours
         'path'     => '/',
-        'secure'   => false,  // Set true if using HTTPS
+        'secure' => (
+            (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+            (int)($_SERVER['SERVER_PORT'] ?? 80) === 443
+        ),
         'httponly' => true,
         'samesite' => 'Lax', // 'Lax' or 'Strict' if not cross-site
     ]);
     session_start();
+
+    if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 }
 
 // Helpers
@@ -58,4 +67,17 @@ function respondError(string $message, int $code = 400): void {
 function getBody(): array {
     $raw = file_get_contents('php://input');
     return json_decode($raw, true) ?? [];
+}
+
+function verifyCsrf(): void {
+    // For JSON requests, the Origin + CORS preflight is sufficient protection.
+    // For multipart/form-data (file uploads), we need an explicit token.
+    $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+    if (str_contains($contentType, 'multipart/form-data') ||
+        str_contains($contentType, 'application/x-www-form-urlencoded')) {
+        $token = $_POST['csrf_token'] ?? '';
+        if (!hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
+            respondError('Invalid or missing CSRF token.', 403);
+        }
+    }
 }

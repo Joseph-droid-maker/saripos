@@ -3,10 +3,11 @@ require_once __DIR__ . '/../../config/cors.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../middleware/auth.php';
 
-$user = requireAuth();
+
 $db   = getDB();
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    requireAdmin();
     $dateFrom = $_GET['date_from'] ?? '';
     $dateTo   = $_GET['date_to']   ?? '';
     $limit    = min(intval($_GET['limit'] ?? 50), 200);
@@ -35,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $user = requireAuth();
     $body      = getBody();
     $items     = $body['items']         ?? [];
     $total     = floatval($body['total']        ?? 0);

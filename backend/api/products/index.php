@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'INSERT INTO products (name, description, sku, price, cost_price, stock, category_id)
          VALUES (?, ?, ?, ?, ?, ?, ?)'
     );
-    $stmt->bind_param('ssssdii', $name, $desc, $sku, $price, $costPrice, $stock, $catId);
+    $stmt->bind_param('sssddii', $name, $desc, $sku, $price, $costPrice, $stock, $catId);
 
     if (!$stmt->execute()) {
         if ($db->errno === 1062) {
