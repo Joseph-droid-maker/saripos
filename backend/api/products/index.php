@@ -69,12 +69,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     );
     $stmt->bind_param('sssddii', $name, $desc, $sku, $price, $costPrice, $stock, $catId);
 
-    if (!$stmt->execute()) {
-        if ($db->errno === 1062) {
+    try {
+        $stmt->execute();
+    } catch(mysqli_sql_exception $e) {
+        if ($e->getCode() === 1062) {
             respondError('SKU already exists. Use a unique SKU.', 409);
         }
         respondError('Failed to create product.', 500);
     }
+        
 
     $newId = $stmt->insert_id;
     $stmt->close();

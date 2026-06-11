@@ -55,7 +55,7 @@ export default function UsersPage() {
     setFormErrors(e);
     return !Object.keys(e).length;
   };
-
+ 
   // ── Save ───────────────────────────────────────────────────
   const handleSave = async () => {
     if (!validate()) return;
@@ -65,7 +65,6 @@ export default function UsersPage() {
         await api.put(`/users/single.php?id=${editing.id}`, {
           full_name: form.full_name.trim(),
           role: form.role,
-          is_active: editing.is_active,
           password: form.password || undefined,
         });
         toast.success('User updated!');
@@ -91,13 +90,17 @@ export default function UsersPage() {
   const handleToggle = async () => {
     const u = users.find(u => u.id === deactId);
     if (!u) return;
+
     try {
-      await api.put(`/users/single.php?id=${u.id}`, {
-        full_name: u.full_name,
-        role: u.role,
-        is_active: u.is_active ? 0 : 1,
-      });
-      toast.success(u.is_active ? 'User deactivated.' : 'User reactivated.');
+      if (u.is_active) {
+        // Deactivate — DELETE enforces self-deactivation and last-admin guards
+        await api.delete(`/users/single.php?id=${u.id}`);
+        toast.success('User deactivated.');
+      } else {
+        // Reactivate — PATCH, no guards required
+        await api.patch(`/users/single.php?id=${u.id}`);
+        toast.success('User reactivated.');                                 
+      }
       setDeactId(null);
       load();
     } catch (err) {

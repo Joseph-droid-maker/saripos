@@ -29,6 +29,10 @@ export const api = {
     method: 'POST',
     body: body instanceof FormData ? body : JSON.stringify(body),
   }),
+  patch:  (path, body) => request(path, {
+    method: 'PATCH',
+    body: body ? JSON.stringify(body) : undefined
+  }),
   put:    (path, body) => request(path, { method: 'PUT',    body: JSON.stringify(body) }),
   delete: (path)       => request(path, { method: 'DELETE' }),
 };

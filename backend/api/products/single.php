@@ -32,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     $costPrice = floatval($body['cost_price'] ?? 0);
     $stock = intval($body['stock']   ?? 0);
     $catId = intval($body['category_id'] ?? 0) ?: null;
+    
     if (!$name)      respondError('Product name is required.');
     if ($price <= 0) respondError('Price must be greater than 0.');
     if ($stock < 0)  respondError('Stock cannot be negative.');
@@ -59,13 +60,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
 
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     requireAdmin();
-    $stmt = $db->prepare('UPDATE products SET is_active=0 WHERE id=?');
+
+    $stmt = $db->prepare('DELETE FROM products WHERE id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();
-    $affected = $stmt->affected_rows;
-    $stmt->close(); $db->close();
-    if (!$affected) respondError('Product not found.', 404);
-    respond(true, null, 'Product deleted.');
-}
 
+    $affected = $stmt->affected_rows;
+
+    $stmt->close();
+    $db->close();
+
+    if (!$affected) {
+        respondError('Product not found.', 404);
+    }
+
+    respond(true, null, 'Product permanently deleted.');
+}
 respondError('Method not allowed.', 405);

@@ -1,8 +1,7 @@
 <?php
-
 return [
     'DB_HOST' => 'localhost',
-    'DB_USER' => 'root',
-    'DB_PASS' => '',
+    'DB_USER' => 'Joseph',
+    'DB_PASS' => 'Morada',
     'DB_NAME' => 'sari_pos',
 ];
