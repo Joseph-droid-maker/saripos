@@ -10,7 +10,7 @@ async function exportPDF(title, headers, rows) {
   const doc = new jsPDF();
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  doc.text('SariPOS — ' + title, 14, 22);
+  doc.text('Jing-Jing Store — ' + title, 14, 22);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.text('Generated: ' + new Date().toLocaleString('en-PH'), 14, 30);
@@ -90,8 +90,8 @@ function DailyTab() {
             </div>
           </div>
           <div className="export-bar">
-            <button className="btn btn-ghost btn-sm" onClick={() => doExport('pdf')}>⬇️ PDF</button>
-            <button className="btn btn-ghost btn-sm" onClick={() => doExport('excel')}>⬇️ Excel</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => doExport('pdf')}><i className="fi fi-sr-file-pdf" /> PDF</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => doExport('excel')}><i className="fi fi-sr-file-excel" /> Excel</button>
           </div>
           <div className="table-wrap">
             <table className="table">
@@ -353,10 +353,10 @@ function LowStockTab() {
 
 // ── Main Page ────────────────────────────────────────────────
 const TABS = [
-  { id: 'daily',    label: '📅 Daily Sales' },
-  { id: 'monthly',  label: '📆 Monthly Sales' },
-  { id: 'best',     label: '⭐ Best Sellers' },
-  { id: 'lowstock', label: '⚠️ Low Stock' },
+  { id: 'daily',    label: 'Daily Sales',   icon: 'fi fi-sr-calendar-day' },
+  { id: 'monthly',  label: 'Monthly Sales', icon: 'fi fi-sr-calendar' },
+  { id: 'best',     label: 'Best Sellers',  icon: 'fi fi-sr-trophy' },
+  { id: 'lowstock', label: 'Low Stock',     icon: 'fi fi-sr-triangle-warning' },
 ];
 
 export default function ReportsPage() {
@@ -370,15 +370,18 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      <div className="tabs">
-        {TABS.map(t => (
-          <button
-            key={t.id}
-            className={`tab-btn ${active === t.id ? 'tab-btn--active' : ''}`}
-            onClick={() => setActive(t.id)}
-          >{t.label}</button>
-        ))}
-      </div>
+     <div className="tabs">
+      {TABS.map(t => (
+        <button
+          key={t.id}
+          className={`tab-btn ${active === t.id ? 'tab-btn--active' : ''}`}
+          onClick={() => setActive(t.id)}
+        >
+          <i className={`tab-icon ${t.icon}`}></i>
+          <span>{t.label}</span>
+        </button>
+      ))}
+    </div>
 
       {active === 'daily'    && <DailyTab />}
       {active === 'monthly'  && <MonthlyTab />}

@@ -36,7 +36,7 @@ export default function App() {
         }}
       />
       {/* // basename="/saripos" */}
-      <BrowserRouter basename="/saripos">
+      <BrowserRouter  >
         <Routes>
           {/* Public */}
           <Route path="/login" element={<LoginPage />} />

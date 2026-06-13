@@ -30,7 +30,7 @@ export default function Layout() {
             >
               ☰
             </button>
-            <span className="topbar__store">🏪 SariPOS</span>
+            <span className="topbar__store"></span>
           </div>
 
           <div className="topbar__right">

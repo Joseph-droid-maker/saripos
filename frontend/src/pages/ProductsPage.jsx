@@ -113,7 +113,7 @@ function ImportModal({ onClose }) {
     ].join('\n');
     const a = Object.assign(document.createElement('a'), {
       href: URL.createObjectURL(new Blob([csv], { type: 'text/csv' })),
-      download: 'saripos_template.csv',
+      download: 'Jing-Jing_template.csv',
     });
     a.click();
   };
@@ -182,7 +182,7 @@ function ImportModal({ onClose }) {
     >
       <div className="form-group">
         <button className="btn btn-ghost btn-sm" onClick={downloadTemplate}>
-          ⬇️ Download Template (CSV)
+          <i className="fi fi-sr-download" /> Download Template (CSV)
         </button>
         <p className="form-hint">
           Accepts <strong>.csv</strong> or <strong>.xlsx / .xls</strong><br />
@@ -242,13 +242,13 @@ function ImportModal({ onClose }) {
       {result && (
         <div className="import-result">
           <div className="import-result__row import-result__row--ok">
-            ✅ <strong>{result.inserted}</strong> products added
+            <i className="fi fi-sr-check-circle"></i> <strong>{result.inserted}</strong> products added  
           </div>
           <div className="import-result__row import-result__row--info">
-            🔄 <strong>{result.updated}</strong> products updated
+            <i className="fi fi-sr-forward"></i> <strong>{result.updated}</strong> products updated
           </div>
           <div className="import-result__row">
-            ⏭️ <strong>{result.skipped}</strong> rows skipped
+            <i className="fi fi-sr-cross-circle"></i> <strong>{result.skipped}</strong> rows skipped
           </div>
           {result.errors?.length > 0 && (
             <div className="import-errors">
@@ -531,8 +531,8 @@ const filtered = products.filter(p => {
         </div>
         {isAdmin && (
           <div className="action-bar">
-            <button className="btn btn-ghost" onClick={() => setCatModal(true)}>🏷️ Categories</button>
-            <button className="btn btn-ghost" onClick={() => setModal('import')}>↑ Import CSV / Excel</button>
+            <button className="btn btn-ghost" onClick={() => setCatModal(true)}><i className="fi fi-sr-boxes" /> Categories</button>
+            <button className="btn btn-ghost" onClick={() => setModal('import')}><i className="fi fi-sr-download" /> Import CSV / Excel</button>
             <button className="btn btn-primary" onClick={openAdd}>+ Add Product</button>
           </div>
         )}
@@ -639,9 +639,9 @@ const filtered = products.filter(p => {
                   {isAdmin && (
                     <td>
                       <div className="table-actions">
-                        <button className="btn btn-ghost btn-sm" title="Update Stock" onClick={() => setStockProd(p)}>📦</button>
-                        <button className="btn btn-ghost btn-sm" title="Edit Product" onClick={() => openEdit(p)}>✏️</button>
-                        <button className="btn btn-danger btn-sm" title="Delete Product" onClick={() => setDeleteId(p.id)}>🗑️</button>
+                        <button className="btn btn-ghost btn-sm" title="Update Stock" onClick={() => setStockProd(p)}><i className="fi fi-sr-box" /></button>
+                        <button className="btn btn-ghost btn-sm" title="Edit Product" onClick={() => openEdit(p)}><i className="fi fi-sr-edit" /></button>
+                        <button className="btn btn-danger btn-sm" title="Delete Product" onClick={() => setDeleteId(p.id)}><i className="fi fi-sr-trash" /></button>
                       </div>
                     </td>
                   )}

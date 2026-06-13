@@ -165,14 +165,16 @@ export default function UsersPage() {
                   <td className="date-secondary">{new Date(u.created_at).toLocaleDateString('en-PH')}</td>
                   <td>
                     <div className="table-actions">
-                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(u)}>✏️</button>
+                      <button  className="btn btn-ghost btn-sm" onClick={() => openEdit(u)}>
+                        <i className="fi fi-sr-edit" />
+                      </button>
                       {u.id !== me?.id && (
                         <button
                           className={`btn btn-sm ${u.is_active ? 'btn-danger' : 'btn-ghost'}`}
                           onClick={() => setDeactId(u.id)}
                           title={u.is_active ? 'Deactivate' : 'Reactivate'}
                         >
-                          {u.is_active ? '🚫' : '✅'}
+                         <i className={u.is_active ? 'fi fi-sr-user-slash' : 'fi fi-sr-user-slash'} />
                         </button>
                       )}
                     </div>
