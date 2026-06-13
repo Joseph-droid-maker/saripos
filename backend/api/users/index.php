@@ -9,7 +9,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $result = $db->query(
         'SELECT id, username, full_name, role, is_active, created_at FROM users ORDER BY created_at DESC'
     );
-    respond(true, $result->fetch_all(MYSQLI_ASSOC));
+    $users = [];
+    while ($row = $result->fetch_assoc()) {
+        $users[] = [
+            ...$row,
+            'id'         => (int)  $row['id'],
+            'is_active'  => (int)  $row['is_active'],
+            
+        ];
+    }
+    respond(true, $users);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

@@ -47,4 +47,5 @@ respond(true, [
     'username'  => $user['username'],
     'full_name' => $user['full_name'],
     'role'      => $user['role'],
+    'csrf_token' => $_SESSION['csrf_token'] ?? '',
 ], 'Login successful.');

@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import Modal from '../components/ui/Modal.jsx';
 import Banner from '../components/ui/Banner.jsx';
 
+
 function StockModal({ product, onClose, onSaved }) {
   const [type,    setType]    = useState('in');
   const [qty,     setQty]     = useState('');
@@ -94,10 +95,14 @@ function StockModal({ product, onClose, onSaved }) {
 
 // ── CSV + Excel Import sub-modal ─────────────────────────────
 function ImportModal({ onClose }) {
+
+  const { csrfToken } = useAuth();
+
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [parseError, setParseError] = useState('');
+  const [importMode, setImportMode] = useState('skip');
 
   const downloadTemplate = () => {
     const csv = [
@@ -108,13 +113,12 @@ function ImportModal({ onClose }) {
     ].join('\n');
     const a = Object.assign(document.createElement('a'), {
       href: URL.createObjectURL(new Blob([csv], { type: 'text/csv' })),
-      download: 'saripos_template.csv',
+      download: 'Jing-Jing_template.csv',
     });
     a.click();
   };
 
   // Converts Excel file to a CSV File object using the xlsx library.
-  // Returns a File on success, throws on error.
   const excelToCsvFile = async (excelFile) => {
     const XLSX = await import('xlsx');
     const buffer = await excelFile.arrayBuffer();
@@ -145,6 +149,7 @@ function ImportModal({ onClose }) {
 
       const fd = new FormData();
       fd.append('csrf_token', csrfToken);
+      fd.append('mode', importMode); 
       fd.append('csv', uploadFile);
 
       const res = await api.post('/products/import.php', fd);
@@ -177,7 +182,7 @@ function ImportModal({ onClose }) {
     >
       <div className="form-group">
         <button className="btn btn-ghost btn-sm" onClick={downloadTemplate}>
-          ⬇️ Download Template (CSV)
+          <i className="fi fi-sr-download" /> Download Template (CSV)
         </button>
         <p className="form-hint">
           Accepts <strong>.csv</strong> or <strong>.xlsx / .xls</strong><br />
@@ -187,6 +192,33 @@ function ImportModal({ onClose }) {
         </p>
       </div>
 
+      {/* Import mode selector */}
+      <div className="form-group">
+        <label className="form-label">Import Mode</label>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            type="button"
+            className={`btn btn-sm ${importMode === 'skip' ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => setImportMode('skip')}
+          >
+            Skip Duplicates
+          </button>
+          <button
+            type="button"
+            className={`btn btn-sm ${importMode === 'overwrite' ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => setImportMode('overwrite')}
+          >
+            Overwrite
+          </button>
+        </div>
+        <p className="form-hint">
+          {importMode === 'skip'
+            ? 'Existing products (matched by SKU or name) are left untouched. Only new rows are added.'
+            : 'Existing products are updated and their stock is increased by the imported quantity.'
+          }
+        </p>
+      </div>
+      
       {!result && (
         <div className="form-group">
           <label className="form-label">Select File</label>
@@ -210,13 +242,13 @@ function ImportModal({ onClose }) {
       {result && (
         <div className="import-result">
           <div className="import-result__row import-result__row--ok">
-            ✅ <strong>{result.inserted}</strong> products added
+            <i className="fi fi-sr-check-circle"></i> <strong>{result.inserted}</strong> products added  
           </div>
           <div className="import-result__row import-result__row--info">
-            🔄 <strong>{result.updated}</strong> products updated
+            <i className="fi fi-sr-forward"></i> <strong>{result.updated}</strong> products updated
           </div>
           <div className="import-result__row">
-            ⏭️ <strong>{result.skipped}</strong> rows skipped
+            <i className="fi fi-sr-cross-circle"></i> <strong>{result.skipped}</strong> rows skipped
           </div>
           {result.errors?.length > 0 && (
             <div className="import-errors">
@@ -333,13 +365,15 @@ function CategoryModal({ categories, onClose, onSaved }) {
 }
 // ── Main Page ────────────────────────────────────────────────
 export default function ProductsPage() {
-  const { user }    = useAuth();
+  
+  const { user, csrfToken } = useAuth(); // add csrfToken here
   const isAdmin     = user?.role === 'admin';
 
   const [products,   setProducts]   = useState([]);
   const [categories, setCategories] = useState([]);
   const [search,     setSearch]     = useState('');
   const [filterCat,  setFilterCat]  = useState('');
+  const [filterStock, setFilterStock] = useState('all'); 
   const [loading,    setLoading]    = useState(true);
   const [banner,     setBanner]     = useState(null);
   const [modal,      setModal]      = useState(null); // null | 'form' | 'import'
@@ -354,6 +388,8 @@ export default function ProductsPage() {
   const [imageFile,  setImageFile]  = useState(null);
   const [imgPreview, setImgPreview] = useState(null);
   const [saving,     setSaving]     = useState(false);
+  
+  
 
   // ── Load ───────────────────────────────────────────────────
   const load = useCallback(async () => {
@@ -375,13 +411,20 @@ export default function ProductsPage() {
   useEffect(() => { load(); }, [load]);
 
   // ── Filtered list + stats ──────────────────────────────────
-  const filtered = products.filter(p => {
-    const q = search.toLowerCase();
-    return (
-      (!q || p.name.toLowerCase().includes(q) || (p.sku || '').toLowerCase().includes(q) || (p.description||'').toLowerCase().includes(q)) &&
-      (!filterCat || String(p.category_id) === filterCat)
-    );
-  });
+const filtered = products.filter(p => {
+  const q = search.toLowerCase();
+  const matchSearch = !q ||
+    p.name.toLowerCase().includes(q) ||
+    (p.sku || '').toLowerCase().includes(q) ||
+    (p.description || '').toLowerCase().includes(q);
+  const matchCat = !filterCat || String(p.category_id) === filterCat;
+  const matchStock =
+    filterStock === 'all' ||
+    (filterStock === 'in'  &&  p.stock > 0) ||
+    (filterStock === 'out' &&  p.stock <= 0) ||
+    (filterStock === 'low' &&  p.stock > 0 && p.stock <= 10);
+  return matchSearch && matchCat && matchStock;
+});
 
   const outOfStock = products.filter(p => p.stock <= 0).length;
   const lowStock   = products.filter(p => p.stock > 0 && p.stock <= 10).length;
@@ -445,7 +488,7 @@ export default function ProductsPage() {
       // Upload image if chosen
       if (imageFile && saved) {
         const fd = new FormData();
-        fd.append('csrf_token', csrfToken); 
+        fd.append('csrf_token', csrfToken);
         fd.append('image', imageFile);
         fd.append('product_id', saved.id);
         await api.post('/products/upload.php', fd);
@@ -488,8 +531,8 @@ export default function ProductsPage() {
         </div>
         {isAdmin && (
           <div className="action-bar">
-            <button className="btn btn-ghost" onClick={() => setCatModal(true)}>🏷️ Categories</button>
-            <button className="btn btn-ghost" onClick={() => setModal('import')}>↑ Import CSV / Excel</button>
+            <button className="btn btn-ghost" onClick={() => setCatModal(true)}><i className="fi fi-sr-boxes" /> Categories</button>
+            <button className="btn btn-ghost" onClick={() => setModal('import')}><i className="fi fi-sr-download" /> Import CSV / Excel</button>
             <button className="btn btn-primary" onClick={openAdd}>+ Add Product</button>
           </div>
         )}
@@ -526,6 +569,19 @@ export default function ProductsPage() {
           <option value="">All Categories</option>
           {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
+
+        <select
+          className="input"
+          value={filterStock}
+          onChange={e => setFilterStock(e.target.value)}
+          style={{ maxWidth: 190, appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none' }}
+        >
+          <option value="all">All Stock</option>
+          <option value="in">In Stock</option>
+          <option value="out">Out of Stock</option>
+          <option value="low">Low Stock (≤10)</option>
+        </select>
+
         <span className="filter-count">{filtered.length} result{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
@@ -583,9 +639,9 @@ export default function ProductsPage() {
                   {isAdmin && (
                     <td>
                       <div className="table-actions">
-                        <button className="btn btn-ghost btn-sm" title="Update Stock" onClick={() => setStockProd(p)}>📦</button>
-                        <button className="btn btn-ghost btn-sm" title="Edit Product" onClick={() => openEdit(p)}>✏️</button>
-                        <button className="btn btn-danger btn-sm" title="Delete Product" onClick={() => setDeleteId(p.id)}>🗑️</button>
+                        <button className="btn btn-ghost btn-sm" title="Update Stock" onClick={() => setStockProd(p)}><i className="fi fi-sr-box" /></button>
+                        <button className="btn btn-ghost btn-sm" title="Edit Product" onClick={() => openEdit(p)}><i className="fi fi-sr-edit" /></button>
+                        <button className="btn btn-danger btn-sm" title="Delete Product" onClick={() => setDeleteId(p.id)}><i className="fi fi-sr-trash" /></button>
                       </div>
                     </td>
                   )}

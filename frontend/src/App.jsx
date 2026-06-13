@@ -35,8 +35,8 @@ export default function App() {
           error:   { iconTheme: { primary: '#B83030', secondary: '#fff' } },
         }}
       />
-
-      <BrowserRouter>
+      {/* // basename="/saripos" */}
+      <BrowserRouter  >
         <Routes>
           {/* Public */}
           <Route path="/login" element={<LoginPage />} />
