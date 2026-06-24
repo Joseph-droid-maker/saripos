@@ -8,6 +8,7 @@ import ProductsPage from './pages/ProductsPage.jsx';
 import SalesPage from './pages/SalesPage.jsx';
 import ReportsPage from './pages/ReportsPage.jsx';
 import UsersPage from './pages/UsersPage.jsx';
+import ExpensesPage from './pages/ExpensesPage.jsx'; 
 
 // Redirects to /login if unauthenticated; to /pos if not admin and adminOnly is true.
 function Guard({ adminOnly = false, children }) {
@@ -36,7 +37,7 @@ export default function App() {
         }}
       />
       {/* // basename="/saripos" */}
-      <BrowserRouter basename="/saripos">
+      <BrowserRouter >
         <Routes>
           {/* Public */}
           <Route path="/login" element={<LoginPage />} />
@@ -50,6 +51,7 @@ export default function App() {
 
             {/* All authenticated users */}
             <Route path="pos"   element={<POSPage />} />
+            <Route path="expenses" element={<Guard><ExpensesPage /></Guard>} />
             <Route path="sales" element={<Guard adminOnly><SalesPage /></Guard>} />
 
             {/* Admin only */}

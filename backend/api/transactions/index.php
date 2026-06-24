@@ -36,11 +36,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $user = requireAuth();
-    $body      = getBody();
-    $items     = $body['items']         ?? [];
-    $total     = floatval($body['total']        ?? 0);
-    $cashGiven = floatval($body['cash_given']   ?? 0);
+    $user  = requireAuth();
+    $body  = getBody();
+    $items = $body['items'] ?? [];
+
+    $items = array_values(array_filter($items, function ($item) {
+        return intval($item['quantity'] ?? 0) > 0;
+    }));
+
+    $total     = floatval($body['total']         ?? 0);
+    $cashGiven = floatval($body['cash_given']    ?? 0);
     $changeAmt = floatval($body['change_amount'] ?? 0);
 
     if (empty($items))       respondError('Cart cannot be empty.');
@@ -49,10 +54,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $txnCode     = 'TXN-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -5));
     $cashierName = $user['full_name'];
-    $itemCount   = count($items);
+    $itemCount   = count($items); 
 
     $db->begin_transaction();
     try {
+
         $stmt = $db->prepare(
             'INSERT INTO transactions (transaction_code, cashier_id, cashier_name, total, cash_given, change_amount, item_count)
              VALUES (?, ?, ?, ?, ?, ?, ?)'
@@ -62,14 +68,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $txnId = $stmt->insert_id;
         $stmt->close();
 
+        $serverSubtotals = [];
+
         foreach ($items as $item) {
-            $productId   = intval($item['product_id']);
-            $productName = trim($item['product_name']);
-            $productSku  = $item['product_sku'] ?? null;
-            $unitPrice   = floatval($item['unit_price']);
-            $qty         = intval($item['quantity']);
-            $subtotal    = floatval($item['subtotal']);
-            if ($qty <= 0) continue;
+            $productId = intval($item['product_id']);
+            $qty       = intval($item['quantity']);
+
+            $priceStmt = $db->prepare('SELECT name, sku, price FROM products WHERE id = ? AND is_active = 1');
+            $priceStmt->bind_param('i', $productId);
+            $priceStmt->execute();
+            $productRow = $priceStmt->get_result()->fetch_assoc();
+            $priceStmt->close();
+
+            if (!$productRow) throw new Exception("Product not found or inactive: ID $productId");
+
+            $serverUnitPrice   = (float) $productRow['price'];
+            $productName       = $productRow['name'];   // server-truth, not client input
+            $productSku        = $productRow['sku'];    // server-truth, not client input
+            $serverSubtotal    = round($serverUnitPrice * $qty, 2);
+            $serverSubtotals[] = $serverSubtotal;
 
             $stockStmt = $db->prepare('UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?');
             $stockStmt->bind_param('iii', $qty, $productId, $qty);
@@ -81,9 +98,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'INSERT INTO transaction_items (transaction_id,product_id,product_name,product_sku,unit_price,quantity,subtotal)
                  VALUES (?, ?, ?, ?, ?, ?, ?)'
             );
-            $itemStmt->bind_param('iissdid', $txnId, $productId, $productName, $productSku, $unitPrice, $qty, $subtotal);
+            $itemStmt->bind_param(
+                'iissdid',
+                $txnId, $productId, $productName, $productSku,
+                $serverUnitPrice, $qty, $serverSubtotal
+            );
             $itemStmt->execute();
             $itemStmt->close();
+        }
+  
+        $serverTotal = round(array_sum($serverSubtotals), 2);
+        $clientTotal = $total;
+        if (abs($serverTotal - $clientTotal) > 0.01) {
+            throw new Exception("Total mismatch. Expected ₱$serverTotal.");
         }
 
         $db->commit();

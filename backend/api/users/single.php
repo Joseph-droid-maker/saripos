@@ -25,14 +25,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
         $stmt = $db->prepare('UPDATE users SET full_name=?, role=?, password_hash=? WHERE id=?');
         $stmt->bind_param('sssi', $fullName, $role,  $hash, $id);
     } else {
-        $stmt = $db->prepare('UPDATE users SET full_name=?, role=?, WHERE id=?');
+        $stmt = $db->prepare('UPDATE users SET full_name=?, role=? WHERE id=?');
         $stmt->bind_param('ssi', $fullName, $role, $id);
     }
 
     if (!$stmt->execute()) respondError('Failed to update user.', 500);
     $stmt->close();
     $db->close();
-    respond(true, null, 'User updatedsdadsa.');
+    respond(true, null, 'User updated.');
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {

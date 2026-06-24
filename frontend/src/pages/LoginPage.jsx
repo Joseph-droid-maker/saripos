@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import logo from '../assets/Logo.png';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -46,8 +47,7 @@ export default function LoginPage() {
       {/* Left decorative panel */}
       <div className="login-deco">
         <div className="login-deco__content">
-          <div className="login-deco__icon">🏪</div>
-          <h1 className="login-deco__title">SariPOS</h1>
+          <div className="login-deco__icon"><img src={logo} alt="Jing-Jing Store Logo" className="login-deco__logo"/> </div>
           <p className="login-deco__sub">Simple. Fast. Yours.</p>
         </div>
       </div>

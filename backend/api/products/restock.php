@@ -19,27 +19,35 @@ if (!in_array($type, ['in', 'out'])) respondError('Type must be "in" or "out".')
 
 $db = getDB();
 
-// For stock-out, make sure there's enough stock
 if ($type === 'out') {
-    $check = $db->prepare('SELECT stock, name FROM products WHERE id = ? AND is_active = 1');
-    $check->bind_param('i', $productId);
-    $check->execute();
-    $product = $check->get_result()->fetch_assoc();
-    $check->close();
+    $stmt = $db->prepare(
+        'UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ? AND is_active = 1'
+    );
+    $stmt->bind_param('iii', $quantity, $productId, $quantity);
+    $stmt->execute();
 
-    if (!$product) respondError('Product not found.', 404);
-    if ($product['stock'] < $quantity) {
-        respondError("Not enough stock. Only {$product['stock']} unit(s) available.");
+    if ($stmt->affected_rows === 0) {
+        $stmt->close();
+
+        $diag = $db->prepare('SELECT stock FROM products WHERE id = ? AND is_active = 1');
+        $diag->bind_param('i', $productId);
+        $diag->execute();
+        $row = $diag->get_result()->fetch_assoc();
+        $diag->close();
+
+        if (!$row) {
+            respondError('Product not found.', 404);
+        }
+
+        respondError("Not enough stock. Only {$row['stock']} unit(s) available.");
     }
-
-    $stmt = $db->prepare('UPDATE products SET stock = stock - ? WHERE id = ?');
+    $stmt->close();
 } else {
     $stmt = $db->prepare('UPDATE products SET stock = stock + ? WHERE id = ?');
+    $stmt->bind_param('ii', $quantity, $productId);
+    $stmt->execute();
+    $stmt->close();
 }
-
-$stmt->bind_param('ii', $quantity, $productId);
-$stmt->execute();
-$stmt->close();
 
 // Return updated product
 $stmt2 = $db->prepare(

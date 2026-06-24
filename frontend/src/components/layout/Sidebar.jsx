@@ -3,15 +3,16 @@ import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import toast from 'react-hot-toast';
 import Modal from '../ui/Modal.jsx';
+import logo from '../../assets/Logo.png';
 
 const NAV = [
-  { to: '/pos',      icon: '🖥️',  label: 'Menu',     roles: ['admin', 'staff'] },
-  { to: '/products', icon: '📦',  label: 'Products', roles: ['admin'] },
-  { to: '/sales',    icon: '🧾',  label: 'History',  roles: ['admin'] },
-  { to: '/reports',  icon: '📊',  label: 'Reports',  roles: ['admin'] },
-  { to: '/users',    icon: '👥',  label: 'Users',    roles: ['admin'] },
+  { to: '/pos',      icon: 'fi fi-sr-apps',       label: 'Menu',     roles: ['admin', 'staff'] },
+  { to: '/products', icon: 'fi fi-sr-box',        label: 'Products', roles: ['admin'] },
+  { to: '/sales',    icon: 'fi fi-sr-receipt',    label: 'History',  roles: ['admin'] },
+  { to: '/expenses', icon: 'fi fi-sr-money-bill-wave', label: 'Expenses', roles: ['admin', 'staff'] },
+  { to: '/reports',  icon: 'fi fi-sr-chart-pie', label: 'Reports',  roles: ['admin'] },
+  { to: '/users',    icon: 'fi fi-sr-users',      label: 'Users',    roles: ['admin'] },
 ];
-
 // open: boolean — controlled by Layout, drives the --open CSS class on mobile
 // onClose: function — called when user navigates or taps the close button
 export default function Sidebar({ open, onClose }) {
@@ -35,8 +36,8 @@ export default function Sidebar({ open, onClose }) {
 
         {/* Brand + mobile close button */}
         <div className="sidebar__brand">
-          <span className="sidebar__logo">🏪</span>
-          <span className="sidebar__name">SariPOS</span>
+          <span className="sidebar__logo"><img src={logo} alt="Jing-Jing Store Logo" className="login-deco__logo"/></span>
+          <span className="sidebar__name">Jing Jing</span>
           {/* Close button: only visible on mobile via CSS */}
           <button
             className="sidebar__close"
@@ -58,7 +59,9 @@ export default function Sidebar({ open, onClose }) {
               }
               onClick={onClose}
             >
-              <span className="sidebar__icon">{item.icon}</span>
+              <span className="sidebar__icon">
+                <i className={item.icon}></i>
+              </span>
               <span className="sidebar__label">{item.label}</span>
             </NavLink>
           ))}
@@ -69,7 +72,7 @@ export default function Sidebar({ open, onClose }) {
           className="sidebar__logout"
           onClick={() => setConfirmLogout(true)}
         >
-          <span>🚪</span>
+          <span><i className="fi fi-sr-sign-out-alt"></i></span>
           <span id="logout__label">Logout</span>
         </button>
       </aside>

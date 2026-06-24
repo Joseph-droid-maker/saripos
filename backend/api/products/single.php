@@ -61,7 +61,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     requireAdmin();
 
-    $stmt = $db->prepare('DELETE FROM products WHERE id = ?');
+    // NEW: "AND is_active = 1" is a guard, not just a filter. It means this
+    // statement can only ever affect a row that is currently active. If the
+    // product is already inactive, affected_rows comes back 0 and we report
+    // 404 instead of pretending a second "delete" did something.
+    $stmt = $db->prepare('UPDATE products SET is_active = 0 WHERE id = ? AND is_active = 1');
     $stmt->bind_param('i', $id);
     $stmt->execute();
 
@@ -71,9 +75,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     $db->close();
 
     if (!$affected) {
-        respondError('Product not found.', 404);
+        // CHANGED: message reflects the new guard condition above
+        respondError('Product not found or already inactive.', 404);
     }
 
-    respond(true, null, 'Product permanently deleted.');
+    // CHANGED: was "Product permanently deleted." — it no longer is
+    respond(true, null, 'Product deactivated.');
 }
+
+
+if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
+    requireAdmin(); // only the admin can bring a product back into circulation
+
+    // Guard: "AND is_active = 0" means this can only succeed on a row that
+    // is currently inactive. Calling PATCH on an already-active product
+    // reports "not found" instead of silently returning success — slightly
+    // more defensive than the equivalent users/single.php PATCH, which
+    // doesn't have this guard. Worth backporting there too, but out of
+    // scope for this change.
+    $stmt = $db->prepare('UPDATE products SET is_active = 1 WHERE id = ? AND is_active = 0');
+    $stmt->bind_param('i', $id);
+
+    if (!$stmt->execute()) respondError('Failed to reactivate product.', 500);
+
+    $affected = $stmt->affected_rows; // 0 = guard above didn't match anything
+    $stmt->close();
+    $db->close();
+
+    if (!$affected) respondError('Product not found or already active.', 404);
+
+    respond(true, null, 'Product reactivated.');
+}
+
+
+
 respondError('Method not allowed.', 405);
