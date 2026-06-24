@@ -1,5 +1,10 @@
 <?php
-$_env = require __DIR__ . '/env.php'; 
+$_env = parse_ini_file(__DIR__ . '/credential.env');
+
+if ($_env === false) {
+    http_response_code(500);
+    exit('Failed to load environment configuration.');
+}
 
 define('DB_HOST', $_env['DB_HOST']);
 define('DB_USER', $_env['DB_USER']);

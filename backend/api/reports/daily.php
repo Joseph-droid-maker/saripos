@@ -26,3 +26,5 @@ $summary = $stmt2->get_result()->fetch_assoc();
 $stmt2->close();
 $db->close();
 respond(true, ['daily' => $rows, 'summary' => $summary, 'date_from' => $dateFrom, 'date_to' => $dateTo]);
+
+

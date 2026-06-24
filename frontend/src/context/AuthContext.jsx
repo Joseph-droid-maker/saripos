@@ -42,6 +42,8 @@ export function AuthProvider({ children }) {
     try { await api.post('/auth/logout.php', {}); } catch { /* ignore */ }
     setUser(null);
     setCsrfToken('');
+    sessionStorage.removeItem('pos_cart');  
+    sessionStorage.removeItem('pos_cash')
   };
 
   return (
