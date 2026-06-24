@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     if (!$stmt->execute()) respondError('Failed to update user.', 500);
     $stmt->close();
     $db->close();
-    respond(true, null, 'User updatedsdadsa.');
+    respond(true, null, 'User updated.');
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {

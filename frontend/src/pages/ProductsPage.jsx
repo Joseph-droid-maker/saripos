@@ -373,7 +373,8 @@ export default function ProductsPage() {
   const [categories, setCategories] = useState([]);
   const [search,     setSearch]     = useState('');
   const [filterCat,  setFilterCat]  = useState('');
-  const [filterStock, setFilterStock] = useState('all'); 
+  const [filterStock, setFilterStock] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('active'); 
   const [loading,    setLoading]    = useState(true);
   const [banner,     setBanner]     = useState(null);
   const [modal,      setModal]      = useState(null); // null | 'form' | 'import'
@@ -395,8 +396,11 @@ export default function ProductsPage() {
   const load = useCallback(async () => {
     setLoading(true); setBanner(null);
     try {
+      // NEW: only add the query string when viewing the Inactive tab —
+      // keeps the default request identical to before for the common case.
+      const statusQuery = filterStatus === 'inactive' ? '?status=inactive' : '';
       const [pr, cr] = await Promise.all([
-        api.get('/products/index.php'),
+        api.get(`/products/index.php${statusQuery}`), // CHANGED: was a static string
         api.get('/categories/index.php'),
       ]);
       setProducts(pr.data || []);
@@ -406,7 +410,7 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filterStatus]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -504,16 +508,26 @@ const filtered = products.filter(p => {
   };
 
   // ── Delete ─────────────────────────────────────────────────
-  const handleDelete = async () => {
+  const handleToggle = async () => {
+    const p = products.find(p => p.id === deleteId); // look up the row by id
+    if (!p) return; // guard: stale id / modal already closed, nothing to do
+
     try {
-      await api.delete(`/products/single.php?id=${deleteId}`);
-      toast.success('Product deleted.');
+      if (p.is_active) {
+        await api.delete(`/products/single.php?id=${p.id}`); // soft-deactivate
+        toast.success('Product deactivated.');
+      } else {
+        await api.patch(`/products/single.php?id=${p.id}`);  // reactivate
+        toast.success('Product reactivated.');
+      }
       setDeleteId(null);
       load();
     } catch (err) {
       toast.error(err.message);
     }
   };
+
+  const toggleProduct = products.find(p => p.id === deleteId);
 
   const setField = (key, val) => {
     setForm(f => ({ ...f, [key]: val }));
@@ -525,7 +539,7 @@ const filtered = products.filter(p => {
     <div className="page">
       {/* Header */}
       <div className="page-header">
-        <div>
+        <div className="page-header__titles">
           <h1 className="page-title">Products</h1>
           <p className="page-subtitle">Manage your store inventory</p>
         </div>
@@ -582,6 +596,24 @@ const filtered = products.filter(p => {
           <option value="low">Low Stock (≤10)</option>
         </select>
 
+        {isAdmin && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              className={`btn btn-sm ${filterStatus === 'active' ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => setFilterStatus('active')}
+            >
+              Active
+            </button>
+            <button
+              className={`btn btn-sm ${filterStatus === 'inactive' ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => setFilterStatus('inactive')}
+            >
+              Inactive
+            </button>
+          </div>
+        )}
+
+
         <span className="filter-count">{filtered.length} result{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
@@ -636,12 +668,20 @@ const filtered = products.filter(p => {
                       {p.stock <= 0 ? 'Out' : p.stock}
                     </span>
                   </td>
-                  {isAdmin && (
+                                    {isAdmin && (
                     <td>
                       <div className="table-actions">
-                        <button className="btn btn-ghost btn-sm" title="Update Stock" onClick={() => setStockProd(p)}><i className="fi fi-sr-box" /></button>
-                        <button className="btn btn-ghost btn-sm" title="Edit Product" onClick={() => openEdit(p)}><i className="fi fi-sr-edit" /></button>
-                        <button className="btn btn-danger btn-sm" title="Delete Product" onClick={() => setDeleteId(p.id)}><i className="fi fi-sr-trash" /></button>
+                        {p.is_active ? (
+                          <>
+                            <button className="btn btn-ghost btn-sm" title="Update Stock" onClick={() => setStockProd(p)}><i className="fi fi-sr-box" /></button>
+                            <button className="btn btn-ghost btn-sm" title="Edit Product" onClick={() => openEdit(p)}><i className="fi fi-sr-edit" /></button>
+                            <button className="btn btn-danger btn-sm" title="Deactivate Product" onClick={() => setDeleteId(p.id)}><i className="fi fi-sr-trash" /></button>
+                          </>
+                        ) : (
+                          <button className="btn btn-ghost btn-sm" title="Reactivate Product" onClick={() => setDeleteId(p.id)}>
+                            <i className="fi fi-sr-rotate-left" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   )}
@@ -745,16 +785,27 @@ const filtered = products.filter(p => {
       <Modal
         open={deleteId !== null}
         onClose={() => setDeleteId(null)}
-        title="Delete Product"
-        danger size="sm"
+        title={toggleProduct?.is_active ? 'Deactivate Product' : 'Reactivate Product'}
+        danger={toggleProduct?.is_active}
+        size="sm"
         footer={
           <div className="modal-footer-btns">
             <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
-            <button className="btn btn-danger" onClick={handleDelete}>Yes, Delete</button>
+            <button
+              className={`btn ${toggleProduct?.is_active ? 'btn-danger' : 'btn-primary'}`}
+              onClick={handleToggle}
+            >
+              {toggleProduct?.is_active ? 'Deactivate' : 'Reactivate'}
+            </button>
           </div>
         }
       >
-        <p>Are you sure you want to delete this product? This cannot be undone.</p>
+        <p>
+          {toggleProduct?.is_active
+            ? `Deactivating "${toggleProduct?.name}" will hide it from the POS and product list. Its sales history is kept intact.`
+            : `Reactivating "${toggleProduct?.name}" will make it available again in the POS and product list.`
+          }
+        </p>
       </Modal>
 
       {/* ── CSV Import ── */}

@@ -9,6 +9,7 @@ const NAV = [
   { to: '/pos',      icon: 'fi fi-sr-apps',       label: 'Menu',     roles: ['admin', 'staff'] },
   { to: '/products', icon: 'fi fi-sr-box',        label: 'Products', roles: ['admin'] },
   { to: '/sales',    icon: 'fi fi-sr-receipt',    label: 'History',  roles: ['admin'] },
+  { to: '/expenses', icon: 'fi fi-sr-money-bill-wave', label: 'Expenses', roles: ['admin', 'staff'] },
   { to: '/reports',  icon: 'fi fi-sr-chart-pie', label: 'Reports',  roles: ['admin'] },
   { to: '/users',    icon: 'fi fi-sr-users',      label: 'Users',    roles: ['admin'] },
 ];

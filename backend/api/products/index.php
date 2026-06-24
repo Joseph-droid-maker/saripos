@@ -11,15 +11,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $search   = trim($_GET['search'] ?? '');
     $category = intval($_GET['category'] ?? 0);
 
+    $showInactive = (($_GET['status'] ?? '') === 'inactive') && $user['role'] === 'admin';
+
     $sql    = 'SELECT p.*, c.name AS category_name
                FROM products p
                LEFT JOIN categories c ON p.category_id = c.id
-               WHERE p.is_active = 1';
-    $params = [];
-    $types  = '';
+               WHERE p.is_active = ?';
+    $params = [$showInactive ? 0 : 1];
+    $types  = 'i';
 
     if ($search) {
-        $sql      .= ' AND (p.name LIKE ? OR p.sku LIKE ? Or p.description LIKE ?)';
+        $sql      .= ' AND (p.name LIKE ? OR p.sku LIKE ? OR p.description LIKE ?)';
         $like      = "%$search%";
         $params[]  = $like;
         $params[]  = $like;

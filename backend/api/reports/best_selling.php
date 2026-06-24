@@ -10,7 +10,7 @@ $dateFrom = $_GET['date_from'] ?? date('Y-m-01');
 $dateTo   = $_GET['date_to']   ?? date('Y-m-d');
 $limit    = min(intval($_GET['limit'] ?? 10), 50);
 
-// Join with products to get current cost_price for profit calculation
+
 $stmt = $db->prepare(
     'SELECT ti.product_name,
             ti.product_sku,
